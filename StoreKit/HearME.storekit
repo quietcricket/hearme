@@ -1,0 +1,48 @@
+{
+  "identifier" : "84631B05-903F-4E6D-B87F-40E23A14C5B9",
+  "nonRenewingSubscriptions" : [],
+  "products" : [
+    {
+      "displayPrice" : "29.99",
+      "familyShareable" : false,
+      "internalID" : "3846120931",
+      "localizations" : [{"description" : "Unlimited HearME listening with a single purchase.", "displayName" : "HearME Lifetime", "locale" : "en_US"}],
+      "productID" : "local.hearme.app.lifetime",
+      "referenceName" : "HearME Lifetime",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "",
+    "_developerTeamID" : "",
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : []
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "08461320",
+      "localizations" : [],
+      "name" : "HearME Unlimited",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "2.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "3846120930",
+          "introductoryOffer" : null,
+          "localizations" : [{"description" : "Unlimited HearME listening, billed monthly.", "displayName" : "HearME Monthly", "locale" : "en_US"}],
+          "productID" : "local.hearme.app.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "HearME Monthly",
+          "subscriptionGroupID" : "08461320",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {"major" : 3, "minor" : 0}
+}

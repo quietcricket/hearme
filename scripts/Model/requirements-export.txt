@@ -1,0 +1,10 @@
+# Development conversion/validation only; none of these ship in HearME.app.
+numpy==2.2.6
+torch==2.8.0
+scipy==1.17.1
+PyYAML==6.0.3
+einops==0.8.2
+rotary-embedding-torch==0.9.1
+loguru==0.7.3
+soundfile==0.14.0
+mlx==0.32.4

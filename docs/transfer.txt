@@ -1,0 +1,33 @@
+HearME 0.5.2 — native MLX + Metal Apple Silicon test build
+
+INSTALL
+1. Unzip (or open the disk image) and drag HearME.app into Applications.
+2. Open HearME. This personal build is ad-hoc signed, not notarized.
+   Apple's first-launch instructions: https://support.apple.com/en-us/102445
+3. Allow HearME under System Settings > Privacy & Security > Screen & System
+   Audio Recording > System Audio Recording Only. Permission is needed on
+   each Mac. Quit and reopen if macOS requests it.
+   When updating an ad-hoc build, an enabled switch may still refer to the old
+   signature. Refresh HearME's audio-only permission for this exact app copy.
+4. Turn HearME on. Audio follows the output selected in macOS.
+
+Requires Apple Silicon and macOS 15+. The app includes the TF-Restormer streaming weights. Inference runs in Swift/MLX + Metal, including
+resampling and spectral processing. Python, PyTorch, Homebrew, downloads and
+internet access are not required. No microphone capture or recordings included.
+
+Low delay (100 ms) is the default for new installs. Choose a larger buffer if needed.
+All buffer sizes share one set of model weights. Models prepare at app launch
+and are reused across Stop/Start and output changes.
+First use can take time while macOS compiles GPU kernels.
+100 ms mode passed source-Mac tests; destination performance is unverified. Processing speed depends on the Mac and should
+be checked on the destination machine. Stop restores ordinary system audio.
+Switching outputs briefly reconnects enhancement. If a queue fills, try a
+larger buffer; if inference cannot sustain real time, a larger buffer cannot
+cure sustained compute overload. Core Audio startup has occasionally stalled
+on the source Mac; this release does not claim to fix every platform stall.
+
+This directly shared build has unrestricted listening and no App Store purchases.
+
+If macOS reports a damaged app, verify the download checksum and run:
+codesign --verify --deep --strict --verbose=4 /Applications/HearME.app
+A failed resource seal needs investigation; do not re-sign a corrupted copy.

@@ -1,0 +1,28 @@
+recordings/
+models/
+*.wav
+*.m4a
+*.mlpackage
+*.mlmodelc
+.DS_Store
+data/
+*.pt
+__pycache__/
+.build/
+.build-tests/
+build/
+.build-xcode/
+**/xcuserdata/
+*.xcuserstate
+
+.build-iap-tests/
+
+# Model checkpoints and local signing material.
+*.safetensors
+*.p12
+*.p8
+*.mobileprovision
+*.provisionprofile
+
+# Local Python environment.
+.venv/
