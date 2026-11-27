@@ -27,6 +27,7 @@
 		E32957433274ECFF3EF5039A /* Sources/HearME/Audio/SystemAudioTap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 794ABC85094A68DBD8845F03 /* Sources/HearME/Audio/SystemAudioTap.swift */; };
 		E4F265D8303A13D1BBA1673E /* Sources/HearME/App/HearMEApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2EA9E26A37C9128CE997D58 /* Sources/HearME/App/HearMEApp.swift */; };
 		EAE100000000000000000002 /* Resources/Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EAE100000000000000000001 /* Resources/Assets.xcassets */; };
+		EAE100000000000000000004 /* THIRD_PARTY_NOTICES.txt in Resources */ = {isa = PBXBuildFile; fileRef = EAE100000000000000000003 /* THIRD_PARTY_NOTICES.txt */; };
 		FCEC5FBE825E74C5CBBB3237 /* models/MLX in Resources */ = {isa = PBXBuildFile; fileRef = 768D7833AB57518BED16493D /* models/MLX */; };
 /* End PBXBuildFile section */
 
@@ -79,6 +80,7 @@
 		E20BC8127892D660153C23C1 /* build-app.sh */ = {isa = PBXFileReference; lastKnownFileType = text; path = "build-app.sh"; sourceTree = SOURCE_ROOT; };
 		EA67A28A323FAD871E388BE7 /* Sources/HearME/Audio/AudioPlayback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/HearME/Audio/AudioPlayback.swift; sourceTree = SOURCE_ROOT; };
 		EAE100000000000000000001 /* Resources/Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Resources/Assets.xcassets; sourceTree = SOURCE_ROOT; };
+		EAE100000000000000000003 /* THIRD_PARTY_NOTICES.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = THIRD_PARTY_NOTICES.txt; sourceTree = SOURCE_ROOT; };
 		F145DCB5730C383297C5ADD4 /* Sources/AudioRing/include/module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = text; path = Sources/AudioRing/include/module.modulemap; sourceTree = SOURCE_ROOT; };
 		FBDA9297711C9226ABF31F6F /* Sources/HearME/Audio/AudioDevices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/HearME/Audio/AudioDevices.swift; sourceTree = SOURCE_ROOT; };
 		FC69F13FC65C16BEF01C26FD /* Sources/HearME/Enhancement/MLXEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/HearME/Enhancement/MLXEngine.swift; sourceTree = SOURCE_ROOT; };
@@ -161,6 +163,7 @@
 			isa = PBXGroup;
 			children = (
 				EAE100000000000000000001 /* Resources/Assets.xcassets */,
+				EAE100000000000000000003 /* THIRD_PARTY_NOTICES.txt */,
 				768D7833AB57518BED16493D /* models/MLX */,
 				12D48915D4A9F6A5958113AC /* Build and documentation */,
 				1CB7349A09B6CEE08AD14E7A /* HearME */,
@@ -314,6 +317,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				EAE100000000000000000002 /* Resources/Assets.xcassets in Resources */,
+				EAE100000000000000000004 /* THIRD_PARTY_NOTICES.txt in Resources */,
 				FCEC5FBE825E74C5CBBB3237 /* models/MLX in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
