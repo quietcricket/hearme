@@ -5,13 +5,47 @@ import Combine
 import ServiceManagement
 import SwiftUI
 
+/// A global key combination: Carbon key code and modifier mask, plus its display label.
+struct HotKey: Codable, Equatable {
+  var keyCode: UInt32
+  var modifiers: UInt32
+  var label: String
+
+  static let standard = HotKey(keyCode: UInt32(kVK_ANSI_H),
+                               modifiers: UInt32(controlKey | optionKey), label: "⌃⌥H")
+
+  /// Builds a hot key from a key press; nil unless ⌘, ⌃ or ⌥ is held.
+  init?(event: NSEvent) {
+    let flags = event.modifierFlags.intersection([.command, .control, .option, .shift])
+    guard !flags.isDisjoint(with: [.command, .control, .option]) else { return nil }
+    var mask = 0, symbols = ""
+    if flags.contains(.control) { mask |= controlKey; symbols += "⌃" }
+    if flags.contains(.option) { mask |= optionKey; symbols += "⌥" }
+    if flags.contains(.shift) { mask |= shiftKey; symbols += "⇧" }
+    if flags.contains(.command) { mask |= cmdKey; symbols += "⌘" }
+    let named: [UInt16: String] = [
+      49: "Space", 36: "↩", 48: "⇥", 51: "⌫", 117: "⌦", 123: "←", 124: "→", 125: "↓", 126: "↑",
+      122: "F1", 120: "F2", 99: "F3", 118: "F4", 96: "F5", 97: "F6", 98: "F7", 100: "F8",
+      101: "F9", 109: "F10", 103: "F11", 111: "F12",
+    ]
+    let key = named[event.keyCode] ?? (event.charactersIgnoringModifiers ?? "?").uppercased()
+    self.init(keyCode: UInt32(event.keyCode), modifiers: UInt32(mask), label: symbols + key)
+  }
+
+  init(keyCode: UInt32, modifiers: UInt32, label: String) {
+    self.keyCode = keyCode
+    self.modifiers = modifiers
+    self.label = label
+  }
+}
+
 private final class ListeningShortcut {
   private var hotKey: EventHotKeyRef?
   private var handler: EventHandlerRef?
   private let action: () -> Void
   var isRegistered: Bool { hotKey != nil }
 
-  init(action: @escaping () -> Void) {
+  init(_ key: HotKey, action: @escaping () -> Void) {
     self.action = action
     var event = EventTypeSpec(eventClass: OSType(kEventClassKeyboard),
                               eventKind: UInt32(kEventHotKeyPressed))
@@ -29,7 +63,7 @@ private final class ListeningShortcut {
     }, 1, &event, Unmanaged.passUnretained(self).toOpaque(), &handler)
     guard status == noErr else { return }
     var identifier = EventHotKeyID(signature: 0x484D4554, id: 1)
-    let registration = RegisterEventHotKey(UInt32(kVK_ANSI_H), UInt32(controlKey | optionKey),
+    let registration = RegisterEventHotKey(key.keyCode, key.modifiers,
                                            identifier, GetApplicationEventTarget(), 0, &hotKey)
     if registration != noErr {
       hotKey = nil
@@ -90,6 +124,8 @@ private final class ListeningShortcut {
     }
   }
   @Published private(set) var shortcutAvailable = false
+  /// nil means the user cleared the shortcut.
+  @Published private(set) var hotKey: HotKey? = .standard
   let purchases = PurchaseStore()
   private var accessObserver: AnyCancellable?
   private let modelStore = ModelStore()
@@ -133,10 +169,12 @@ private final class ListeningShortcut {
         self.reconcileOutput()
       }
     }
-    shortcut = ListeningShortcut { [weak self] in
-      Task { @MainActor in self?.toggleListening() }
+    if let data = UserDefaults.standard.data(forKey: "hotKey"),
+      let saved = try? JSONDecoder().decode(HotKey?.self, from: data)
+    {
+      hotKey = saved
     }
-    shortcutAvailable = shortcut?.isRegistered == true
+    registerHotKey()
     prepareModel()
   }
 
@@ -147,6 +185,27 @@ private final class ListeningShortcut {
     outputDB = 20 * log10(max(Double(levels.1), 0.000001))
     levelHistory.removeFirst()
     levelHistory.append(max(0, min(1, (outputDB + 54) / 54)))
+  }
+
+  func setHotKey(_ key: HotKey?) {
+    hotKey = key
+    UserDefaults.standard.set(try? JSONEncoder().encode(key), forKey: "hotKey")
+    registerHotKey()
+  }
+
+  /// Releases the global shortcut so a recorder can see the key press.
+  func pauseHotKey() {
+    shortcut = nil
+  }
+
+  func registerHotKey() {
+    shortcut = nil
+    if let hotKey {
+      shortcut = ListeningShortcut(hotKey) { [weak self] in
+        Task { @MainActor in self?.toggleListening() }
+      }
+    }
+    shortcutAvailable = shortcut?.isRegistered == true
   }
 
   func toggleListening() {
@@ -368,6 +427,9 @@ struct ContentView: View {
   @ObservedObject var model: AppModel
   @ObservedObject private var purchases: PurchaseStore
   @State private var showDiagnostics = false
+  @State private var showShortcut = false
+  @State private var recording = false
+  @State private var keyMonitor: Any?
   @State private var launchAtLogin = false
 
   init(model: AppModel) {
@@ -379,6 +441,8 @@ struct ContentView: View {
     Group {
       if purchases.showPaywall {
         PurchaseView(store: purchases)
+      } else if showShortcut {
+        shortcutSettings
       } else if showDiagnostics {
         diagnostics
       } else {
@@ -541,7 +605,8 @@ struct ContentView: View {
     .accessibilityLabel("Voice enhancement")
     .accessibilityValue(model.running ? "On" : "Off")
     .accessibilityHint(model.loading ? "Cancel turning on" : model.running ? "Turn off" : "Turn on")
-    .help(model.shortcutAvailable ? "Turn on or off · ⌃⌥H" : "Turn on or off (⌃⌥H unavailable)")
+    .help(model.hotKey.map { model.shortcutAvailable ? "Turn on or off · \($0.label)"
+                                : "Turn on or off (\($0.label) unavailable)" } ?? "Turn on or off")
   }
 
   private var footer: some View {
@@ -578,6 +643,7 @@ struct ContentView: View {
           } catch { model.failure = error.localizedDescription }
           launchAtLogin = SMAppService.mainApp.status == .enabled
         }))
+      Button("Keyboard Shortcut…") { showShortcut = true }
       Button("Diagnostics…") { showDiagnostics = true }
       Button("About HearME") {
         NSApp.activate(ignoringOtherApps: true)
@@ -595,6 +661,84 @@ struct ContentView: View {
     }
     .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
     .accessibilityLabel("More")
+  }
+
+  private var shortcutSettings: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      VStack(alignment: .leading, spacing: 4) {
+        Text("Keyboard shortcut").font(.title3.weight(.semibold))
+        Text("Turns HearME on or off from any app.")
+          .font(.callout).foregroundStyle(.secondary)
+      }
+      Button {
+        recording ? stopRecording() : startRecording()
+      } label: {
+        Text(recording ? "Press keys…" : model.hotKey?.label ?? "None")
+          .font(.system(size: 22, weight: .medium, design: .monospaced))
+          .foregroundStyle(recording ? Palette.orange : .white)
+          .frame(maxWidth: .infinity, minHeight: 56)
+          .background(Palette.screen, in: RoundedRectangle(cornerRadius: 12))
+          .overlay(RoundedRectangle(cornerRadius: 12)
+            .strokeBorder(recording ? Palette.orange : .clear, lineWidth: 1.5))
+          .contentShape(RoundedRectangle(cornerRadius: 12))
+      }
+      .buttonStyle(.plain)
+      .accessibilityLabel("Shortcut")
+      .accessibilityValue(model.hotKey?.label ?? "None")
+      .accessibilityHint(recording ? "Press the new key combination" : "Record a new shortcut")
+      Text(recording ? "Hold ⌘, ⌃ or ⌥ and press a key. Esc cancels."
+           : "Click to record a new shortcut.")
+        .font(.caption).foregroundStyle(.secondary)
+      if !recording, model.hotKey != nil, !model.shortcutAvailable {
+        Text("Another app is using this shortcut. Choose a different one.")
+          .font(.callout).foregroundStyle(Palette.orange)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+      HStack {
+        Button("Reset to \(HotKey.standard.label)") { stopRecording(); model.setHotKey(.standard) }
+          .disabled(model.hotKey == .standard)
+        Button("Clear") { stopRecording(); model.setHotKey(nil) }
+          .disabled(model.hotKey == nil)
+        Spacer()
+        Button("Done") { stopRecording(); showShortcut = false }.keyboardShortcut(.defaultAction)
+      }
+    }
+    .padding(16).frame(width: 320)
+    .background(Palette.body)
+    .environment(\.colorScheme, .dark)
+    .onDisappear { stopRecording() }
+  }
+
+  private func startRecording() {
+    recording = true
+    model.pauseHotKey()
+    // Menu bar panels don't receive keys while another app is active.
+    NSApp.activate()
+    NSApp.windows.first { $0.isVisible && $0.canBecomeKey }?.makeKey()
+    keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+      if event.keyCode == 53 {  // Esc
+        stopRecording()
+      } else if let key = HotKey(event: event) {
+        recording = false
+        removeMonitor()
+        model.setHotKey(key)
+      } else {
+        NSSound.beep()
+      }
+      return nil
+    }
+  }
+
+  private func stopRecording() {
+    guard recording else { return }
+    recording = false
+    removeMonitor()
+    model.registerHotKey()
+  }
+
+  private func removeMonitor() {
+    if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
+    keyMonitor = nil
   }
 
   private var diagnostics: some View {
